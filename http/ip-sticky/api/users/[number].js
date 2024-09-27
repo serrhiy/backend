@@ -1,0 +1,3 @@
+({
+  read: (id) => users[id],
+});
