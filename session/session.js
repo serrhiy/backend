@@ -21,19 +21,19 @@ const generateToken = () => {
 };
 
 const parseCookies = (string) => {
-  const result = Object.create(null);
+  const result = new Map();
   if (!string) return result;
   const cookies = string.split(';');
   for (const cookie of cookies) {    
     const [key, value = ''] = cookie.split('=');
-    result[key.trim()] = value.trim();
+    result.set(key.trim(), value.trim());
   }
   return result;
 };
 
 module.exports = (storage) => class Session {
   #response = null;
-  #cookies = {};
+  #cookies = null;
 
   constructor(request, response) {
     this.#response = response;
@@ -42,29 +42,27 @@ module.exports = (storage) => class Session {
   }
 
   async #restoreCookie() {
-    const cookie = this.#cookies;    
-    if ('token' in cookie) {
-      const storageCookie = await storage.get(cookie.token);      
+    const cookie = this.#cookies;
+    if (cookie.has('token')) {
+      const token = cookie.get('token');
+      const storageCookie = await storage.get(token);
       if (storageCookie) {
-        this.#cookies = { ...storageCookie, ...this.#cookies  };
-        return;
+        return void (this.#cookies = storageCookie);
       }
     }
-    cookie.token = generateToken();
+    cookie.set('token', generateToken());
   }
 
-  setCookie(key, value) {
-    this.#cookies[key] = value;
+  setCookie(key, value) {   
+    this.#cookies.set(key, value);
   }
 
   finish() {
     if (this.#response.headersSent) return;
-    const cookies = [];
-    for (const [key, value] of Object.entries(this.#cookies)) {
-      const cookie =  key + '=' + value + '; ' + DEFAULT_COOKIE;
-      cookies.push(cookie);
-    }
-    storage.save(this.#cookies.token, this.#cookies);
-    this.#response.setHeader('Set-Cookie', cookies);
+    this.setCookie('x', 'y');
+    const token = this.#cookies.get('token');
+    const cookieToken = `token=${token}; ${DEFAULT_COOKIE}`;
+    storage.save(token, this.#cookies);
+    this.#response.setHeader('Set-Cookie', cookieToken);
   }
 };

@@ -2,9 +2,9 @@
 
 const fsp = require('node:fs/promises');
 const path = require('node:path');
+const v8 = require('node:v8');
 
 const PATH = path.join(__dirname, 'sessions');
-const ENCODING = 'utf-8';
 
 const toBool = [() => true, () => false];
 
@@ -30,22 +30,23 @@ class Storage {
   #cache = new Map();
 
   async get(token) {
-    if (this.#cache.has(token)) { 
-      return this.#cache.get(token);
+    const existsFile = await existsSession(token);    
+    if (this.#cache.has(token)) {
+      const session = this.#cache.get(token);
+      if (!existsFile) await this.save(token, session);
+      return session;
     }
-    const existsFile = await existsSession(token);
     if (!existsFile) return null;
-    const string = await readSession(token, ENCODING);
-    const value = JSON.parse(string);
-    this.#cache.set(token, value);
-    return value;
+    const buffer = await readSession(token);
+    const session = v8.deserialize(buffer);
+    this.#cache.set(token, session);
+    return session;
   }
 
-  async save(token, value) {
-    this.#cache.set(token, value);
-    const json = JSON.stringify(value);
-    const success = await writeSession(token, json, ENCODING).then(...toBool);
-    return success;
+  async save(token, session) {
+    this.#cache.set(token, session);
+    const serialised = v8.serialize(session);
+    await writeSession(token, serialised).then(...toBool);
   }
 
   async delete(token) {
