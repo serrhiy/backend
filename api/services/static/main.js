@@ -2,7 +2,7 @@
 
 const http = require('node:http');
 const routing = require('./routing.js');
-const loadFiles = require('./loadFiles.js');
+const loadFiles = require('./cacheFiles.js');
 const contentType = require('./contentType.js');
 
 const prepareUrl = (url) => {
