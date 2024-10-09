@@ -22,9 +22,12 @@ module.exports = async (socket) => {
     const rest = total.subarray(lastFrameLength);
     frames.push(frame);
     chunks.length = 0;
-    chunks.push(rest);
-    totalLength = rest.length;
     lastFrameLength = 0;
+    totalLength = 0;
+    if (rest.length >= 2) {
+      socket.emit('data', rest);
+      continue;
+    }
     const last = frame.readUInt8(0) & 128;
     if (last) return frames;
   }
