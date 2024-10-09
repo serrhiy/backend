@@ -16,7 +16,7 @@ const buildAnswer = (message) => {
 
 const main = () => {
   const server = new http.Server();
-  server.on('upgrade', async (request, socket, head) => {
+  server.on('upgrade', async (request, socket) => {
     const { headers } = request;
     const { upgrade: protocol } = headers;
     const method = request.method.toLowerCase();
@@ -24,10 +24,9 @@ const main = () => {
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
     socket.write(handshake(hashed));
-    const frames = await getFrames(socket);
     const decoder = new TextDecoder();
     const strings = [];
-    for (const frame of frames) {
+    for await (const frame of getFrames(socket)) {
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);

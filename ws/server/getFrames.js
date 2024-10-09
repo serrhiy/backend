@@ -3,8 +3,7 @@
 const { on } = require('node:events');
 const parser = require('./parser.js');
 
-module.exports = async (socket) => {
-  const frames = [];
+module.exports = async function* (socket) {
   const chunks = [];
   let lastFrameLength = 0;
   let totalLength = 0;
@@ -20,15 +19,15 @@ module.exports = async (socket) => {
     const total = Buffer.concat(chunks);
     const frame = total.subarray(0, lastFrameLength);
     const rest = total.subarray(lastFrameLength);
-    frames.push(frame);
     chunks.length = 0;
     lastFrameLength = 0;
     totalLength = 0;
+    yield frame;
     if (rest.length >= 2) {
       socket.emit('data', rest);
       continue;
     }
-    const last = frame.readUInt8(0) & 128;
-    if (last) return frames;
+    if (frame.readUInt8(0) & 128) return;
   }
 };
+
