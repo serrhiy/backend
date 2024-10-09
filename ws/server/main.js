@@ -25,13 +25,20 @@ const main = () => {
     const hashed = hash(key);
     socket.write(handshake(hashed));
     const frames = await getFrames(socket);
+    const decoder = new TextDecoder();
+    const strings = [];
     for (const frame of frames) {
       const mask = parser.mask(frame);
-      const data = parser.content(frame);
-      const message = Uint8Array.from(data, (elt, i) => elt ^ mask[i % 4]);
-      const string = new TextDecoder().decode(message);
-      console.log(string);
+      const content = parser.content(frame);
+      const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
+      const string = decoder.decode(message);
+      strings.push(string);
     }
+    const data = strings.join('');
+    const user = JSON.parse(data);
+    const answer = { ...user, server: true };
+    const json = JSON.stringify(answer);
+    socket.write(buildAnswer(json));
     socket.on('error', console.log);
   });
   server.listen(8000, '127.0.0.1');
