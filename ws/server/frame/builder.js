@@ -28,9 +28,4 @@ const fromString = (message) => {
   return output;
 };
 
-
-module.exports = {
-  build: {
-    fromString,
-  },
-};
+module.exports = { fromString };

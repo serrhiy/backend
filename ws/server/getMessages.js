@@ -1,7 +1,7 @@
 'use strict';
 
 const { on } = require('node:events');
-const parser = require('./parser.js');
+const { parser } = require('./frame/main.js');
 
 const getFrames = async function* (socket) {
   const chunks = [];

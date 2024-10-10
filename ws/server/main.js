@@ -4,7 +4,7 @@ const http = require('node:http');
 const hash = require('./hash.js');
 const handshake = require('./handshake.js');
 const getMessages = require('./getMessages.js');
-const frame = require('./frame.js');
+const frame = require('./frame/main.js');
 
 const main = () => {
   const server = new http.Server();
@@ -20,7 +20,7 @@ const main = () => {
       const user = JSON.parse(message);
       const answer = { ...user, server: true };
       const json = JSON.stringify(answer);
-      const buffer = frame.build.fromString(json);
+      const buffer = frame.builder.fromString(json);
       socket.write(buffer);
     }
     socket.on('error', console.log);
