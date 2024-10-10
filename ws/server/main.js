@@ -5,16 +5,17 @@ const hash = require('./hash.js');
 const handshake = require('./handshake.js');
 const parser = require('./parser.js');
 const getFrames = require('./getFrames.js');
+const frame = require('./frame.js');
+const stream = require('node:stream');
+const timers = require('node:timers');
 
-const buildAnswer = (message) => {
-  const buffer = Buffer.alloc(message.length + 2);
-  buffer[0] = 129;
-  buffer[1] = message.length;
-  Buffer.from(message).copy(buffer, 2, 0);
-  return buffer;
-};
+function byteToBinaryString(s) {
+  return s.toString(2).padStart(8, '0');
+}
 
 const main = () => {
+  // const buffer = frame.build.fromString('a'.repeat(65536));
+  // console.log([...buffer].map(byteToBinaryString).join(' '));
   const server = new http.Server();
   server.on('upgrade', async (request, socket) => {
     const { headers } = request;
@@ -37,7 +38,9 @@ const main = () => {
     const user = JSON.parse(data);
     const answer = { ...user, server: true };
     const json = JSON.stringify(answer);
-    socket.write(buildAnswer(json));
+    const buffer = frame.build.fromString('a'.repeat(100));
+    const source = stream.Readable.from(buffer);
+    source.pipe(socket);
     socket.on('error', console.log);
   });
   server.listen(8000, '127.0.0.1');
