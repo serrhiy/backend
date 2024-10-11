@@ -8,6 +8,7 @@ const frame = require('./frame/main.js');
 
 const main = () => {
   const connections = new Set();
+  const messages = [];
   const server = new http.Server();
   server.on('upgrade', (request, socket) => {    
     const { headers } = request;
@@ -22,7 +23,11 @@ const main = () => {
       socket.destroy();
       connections.delete(socket);
     });
+    for (const message of messages) {
+      socket.write(frame.builder.fromString(message));
+    }
     getMessages(socket, (message) => {
+      messages.push(message);
       for (const connection of connections) {
         if (connection === socket) continue;
         const buffer = frame.builder.fromString(message);        

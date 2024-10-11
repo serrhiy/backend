@@ -3,7 +3,7 @@
 const CHAR_RETURN = 13;
 
 const main = () => {
-  const socket = new WebSocket('ws://127.0.0.1:8000/chat');
+  const socket = new WebSocket('ws://127.0.0.1:8000/');
   const chat = document.getElementById('chat');
   const msg = document.getElementById('msg');
   msg.focus();

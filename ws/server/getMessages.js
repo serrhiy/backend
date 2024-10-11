@@ -27,10 +27,20 @@ const getFrames = (socket, next) => {
   });
 };
 
+const preparePong = () => {
+  const output = Buffer.allocUnsafe(2);
+  output[0] = 138;
+  output[1] = 0;
+  return output;
+};
+
 module.exports = (socket, listener) => {
   const dataChunks = [];
   const decoder = new TextDecoder();
   getFrames(socket, ({ last, frame }) => {
+    if ((frame[0] & 15) === 9) return void socket.write(preparePong());
+    if ((frame[0] & 15) === 8) return void socket.emit('end');
+    if ((frame[0] & 15) === 10) return;
     const mask = parser.mask(frame);
     const content = parser.content(frame);
     const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
