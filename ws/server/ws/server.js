@@ -1,9 +1,9 @@
 'use strict';
 
-const Connection = require('./connection.js');
+const events = require('node:events');
 const hash = require('./hash.js');
 const handshake = require('./handshake.js');
-const events = require('node:events');
+const Connection = require('./connection.js');
 
 class WebSocketServer extends events.EventEmitter {
   #server = null;
