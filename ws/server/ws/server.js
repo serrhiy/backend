@@ -22,8 +22,8 @@ class WebSocketServer extends events.EventEmitter {
     if (protocol !== 'websocket' || method !== 'get') return;
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
-    socket.write(handshake(hashed));
     const connection = new Connection(socket);
+    connection.send(handshake(hashed), true);
     connection.on('disconnect', this.#onDisconnect.bind(this));
     this.#connections.add(connection);
     this.emit('connection', connection);

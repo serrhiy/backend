@@ -16,7 +16,7 @@ class Connection extends events.EventEmitter {
     const dataChunks = [];
     const decoder = new TextDecoder();
     this.#getFrames((last, frame) => {
-      if ((frame[0] & 15) === 9) return void this.#socket.write(preparePong());
+      if ((frame[0] & 15) === 9) return void this.send(preparePong(), true);
       if ((frame[0] & 15) === 8) return void this.#onEnd();
       if ((frame[0] & 15) === 10) return;
       const mask = parser.mask(frame);
@@ -61,7 +61,8 @@ class Connection extends events.EventEmitter {
     this.emit('disconnect', this);
   }
 
-  send(data) {
+  send(data, raw = false) {
+    if (raw) return void this.#socket.write(data);
     if (typeof data === 'string') {
       const message = builder.fromString(data);
       return void this.#socket.write(message);

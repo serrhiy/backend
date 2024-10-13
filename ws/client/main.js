@@ -23,7 +23,8 @@ const main = () => {
   });
 
   socket.addEventListener('message', ({ data }) => {
-    writeLine(data);
+    const messages = JSON.parse(data);
+    for (const message of messages) writeLine(message);
   });
 
   msg.addEventListener('keydown', (event) => {
