@@ -24,7 +24,9 @@ class WebSocketServer extends events.EventEmitter {
     const { upgrade: protocol } = headers;
     const method = request.method.toLowerCase();
     const validVersion = isValidHttpVersion(request.httpVersion);
-    if (protocol !== 'websocket' || method !== 'get' || !validVersion) return;
+    if (!protocol.includes('websocket') || method !== 'get' || !validVersion) {
+      return;
+    }
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
     const connection = new Connection(socket);
