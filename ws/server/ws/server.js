@@ -3,11 +3,8 @@
 const events = require('node:events');
 const hash = require('./hash.js');
 const handshake = require('./handshake.js');
+const validRequest = require('./validRequest.js');
 const Connection = require('./connection.js');
-
-const isValidHttpVersion = (httpVersion) => (
-  Number.parseInt(httpVersion.replaceAll('.', '')) >= 11
-);
 
 class WebSocketServer extends events.EventEmitter {
   #server = null;
@@ -20,13 +17,8 @@ class WebSocketServer extends events.EventEmitter {
   }
 
   #onUpgrade(request, socket) {
+    if (!validRequest(request)) return;
     const { headers } = request;
-    const { upgrade: protocol } = headers;
-    const method = request.method.toLowerCase();
-    const validVersion = isValidHttpVersion(request.httpVersion);
-    if (!protocol.includes('websocket') || method !== 'get' || !validVersion) {
-      return;
-    }
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
     const connection = new Connection(socket);
