@@ -1,5 +1,7 @@
 'use strict';
 
+const { parser } = require('./frame/main.js');
+
 module.exports = (socket, next) => {
   const chunks = [];
   let lastFrameLength = 0;

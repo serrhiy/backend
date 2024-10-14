@@ -17,12 +17,15 @@ class WebSocketServer extends events.EventEmitter {
   }
 
   #onUpgrade(request, socket) {
-    if (!validRequest(request)) return;
+    if (!validRequest(request)) {
+      const answer = handshake.error('Invalid Request');
+      return void socket.end(answer);
+    }
     const { headers } = request;
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
     const connection = new Connection(socket);
-    connection.send(handshake(hashed), true);
+    connection.send(handshake.success(hashed), true);
     connection.on('disconnect', this.#onDisconnect.bind(this));
     this.#connections.add(connection);
     this.emit('connection', connection);

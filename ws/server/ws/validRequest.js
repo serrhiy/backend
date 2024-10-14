@@ -22,7 +22,8 @@ const validators = {
   validKey: (request) => 'sec-websocket-key' in request.headers,
   validWebSocketVersion: (request) => {
     return request.headers['sec-websocket-version'] === '13';
-  }
+  },
+  validateHostField: (request) => 'host' in request.headers,
 };
 
 module.exports = (request) => {
