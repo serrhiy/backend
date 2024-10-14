@@ -5,6 +5,10 @@ const hash = require('./hash.js');
 const handshake = require('./handshake.js');
 const Connection = require('./connection.js');
 
+const isValidHttpVersion = (httpVersion) => (
+  Number.parseInt(httpVersion.replaceAll('.', '')) >= 11
+);
+
 class WebSocketServer extends events.EventEmitter {
   #server = null;
   #connections = new Set();
@@ -19,7 +23,8 @@ class WebSocketServer extends events.EventEmitter {
     const { headers } = request;
     const { upgrade: protocol } = headers;
     const method = request.method.toLowerCase();
-    if (protocol !== 'websocket' || method !== 'get') return;
+    const validVersion = isValidHttpVersion(request.httpVersion);
+    if (protocol !== 'websocket' || method !== 'get' || !validVersion) return;
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
     const connection = new Connection(socket);
