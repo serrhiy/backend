@@ -2,11 +2,10 @@
 
 const http = require('node:http');
 const WebSocketServer = require('./ws/server.js');
+const config = require('./config.js');
 
 const main = () => {
-  const httpServer = new http.Server();
-  httpServer.listen(8000, '127.0.0.1');
-  const ws = new WebSocketServer(httpServer);
+  const ws = new WebSocketServer(new http.Server(), config);
   const messages = [];
   ws.on('connection', (socket) => {
     socket.send(JSON.stringify(messages));

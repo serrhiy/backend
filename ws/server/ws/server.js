@@ -10,10 +10,11 @@ class WebSocketServer extends events.EventEmitter {
   #server = null;
   #connections = new Set();
 
-  constructor(server) {
+  constructor(server, options) {
     super();
     this.#server = server;
     server.on('upgrade', this.#onUpgrade.bind(this));
+    server.listen(options.port, options.config);
   }
 
   #onUpgrade(request, socket) {
