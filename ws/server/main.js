@@ -11,6 +11,7 @@ const main = () => {
     socket.send(JSON.stringify(messages));
     socket.on('message', (message) => {
       messages.push(message);
+      if (message === 'close') socket.close();
       for (const connection of ws.connections) {
         if (connection === socket) continue;
         const data = JSON.stringify([message]);

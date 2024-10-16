@@ -8,8 +8,13 @@ const preparePong = () => Buffer.from([138, 0]); // to do
 
 const prepareClose = () => Buffer.from([136, 0]); // to do
 
+const OPEN = 0;
+const CLOSING = 1;
+const CLOSED = 2;
+
 class Connection extends events.EventEmitter {
   #socket = null;
+  #state = OPEN;
 
   constructor(socket) {
     super();
@@ -26,8 +31,9 @@ class Connection extends events.EventEmitter {
       const rsv = frame[0] & 112;
       if (!masked || rsv) { /* Fail the WebSocket Connection */ }
       if (opcode === 8) {
-        this.send(prepareClose(), true);
-        return void this.#onEnd();
+        if (this.#state !== CLOSING) this.close();
+        this.#state = CLOSED;
+        this.#onEnd();
       }
       if (opcode === 9) return void this.send(preparePong(), true);
       if (opcode === 10) return;
@@ -55,6 +61,12 @@ class Connection extends events.EventEmitter {
       const message = builder.fromString(data);
       return void this.#socket.write(message);
     }
+  }
+
+  close() {
+    this.#state = CLOSING;
+    const closingFrame = prepareClose();
+    this.send(closingFrame, true);
   }
 };
 
