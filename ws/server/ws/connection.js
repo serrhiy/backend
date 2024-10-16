@@ -8,18 +8,24 @@ const preparePong = () => Buffer.from([138, 0]); // to do
 
 const prepareClose = () => Buffer.from([136, 0]); // to do
 
+const preparePing = () => Buffer.from([137, 0]); // to do
+
 const OPEN = 0;
 const CLOSING = 1;
 const CLOSED = 2;
 
+const PING_TIMEOUT = 3000;
+
 class Connection extends events.EventEmitter {
   #socket = null;
   #state = OPEN;
+  #pingsTimers = [];
 
   constructor(socket) {
     super();
     this.#socket = socket;
     this.#getMessages();
+    socket.on('end', this.#onEnd.bind(this));
   }
 
   #getMessages() {
@@ -33,10 +39,17 @@ class Connection extends events.EventEmitter {
       if (opcode === 8) {
         if (this.#state !== CLOSING) this.close();
         this.#state = CLOSED;
-        this.#onEnd();
+        return void this.#onEnd();
       }
-      if (opcode === 9) return void this.send(preparePong(), true);
-      if (opcode === 10) return;
+      if (opcode === 9) {
+        return void this.send(preparePong(), true);
+      }
+      if (opcode === 10) {
+        const timers = this.#pingsTimers;
+        if (timers.length === 0) return;
+        const timer = timers.shift();
+        clearTimeout(timer);
+      };
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
@@ -50,6 +63,7 @@ class Connection extends events.EventEmitter {
   }
 
   #onEnd() {
+    for (const timer of this.#pingsTimers) clearTimeout(timer);
     this.#socket.destroy();
     this.#socket.removeAllListeners();
     this.emit('disconnect', this);
@@ -67,6 +81,14 @@ class Connection extends events.EventEmitter {
     this.#state = CLOSING;
     const closingFrame = prepareClose();
     this.send(closingFrame, true);
+  }
+
+  ping() {
+    const timers = this.#pingsTimers;
+    const pingFrame = preparePing();
+    this.send(pingFrame, true);
+    const timer = setTimeout(this.#onEnd.bind(this), PING_TIMEOUT);
+    timers.push(timer);
   }
 };
 
