@@ -2,9 +2,17 @@
 
 const events = require('node:events');
 const { builder, parser } = require('./frame/main.js');
+const { Buffer } = require('node:buffer');
 const getFrames = require('./getFrames.js');
 
-const preparePong = () => Buffer.from([138, 0]); // to do
+const preparePong = (pingFrame) => {
+  const content = parser.content(pingFrame);
+  const output = Buffer.allocUnsafe(content.length + 2);
+  output[0] = 138;
+  output[1] = content.length;
+  content.copy(output, 2);
+  return output;
+};
 
 const prepareClose = () => Buffer.from([136, 0]); // to do
 
@@ -42,7 +50,8 @@ class Connection extends events.EventEmitter {
         return void this.#onEnd();
       }
       if (opcode === 9) {
-        return void this.send(preparePong(), true);
+        console.log('pong');
+        return void this.send(preparePong(frame), true);
       }
       if (opcode === 10) {
         const timers = this.#pingsTimers;
