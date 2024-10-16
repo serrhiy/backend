@@ -17,9 +17,12 @@ class Connection extends events.EventEmitter {
     const dataChunks = [];
     const decoder = new TextDecoder();
     getFrames(this.#socket, (last, frame) => {
-      if ((frame[0] & 15) === 9) return void this.send(preparePong(), true);
-      if ((frame[0] & 15) === 8) return void this.#onEnd();
-      if ((frame[0] & 15) === 10) return;
+      const opcode = frame[0] & 15;
+      const masked = frame[1] & 256;
+      if (!masked) { /* close connection */ }
+      if (opcode === 8) return void this.#onEnd();
+      if (opcode === 9) return void this.send(preparePong(), true);
+      if (opcode === 10) return;
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
