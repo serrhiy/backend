@@ -13,19 +13,20 @@ class WebSocketServer extends events.EventEmitter {
   constructor(server, options) {
     super();
     this.#server = server;
-    server.on('upgrade', this.#onUpgrade.bind(this));
+    server.on('upgrade', (request, socket) => {
+      if (!validRequest(request)) {
+        const answer = handshake.error('Invalid Request');
+        return void socket.end(answer);
+      }
+      this.#onUpgrade(request, new Connection(socket));
+    });
     server.listen(options.port, options.config);
   }
 
-  #onUpgrade(request, socket) {
-    if (!validRequest(request)) {
-      const answer = handshake.error('Invalid Request');
-      return void socket.end(answer);
-    }
+  #onUpgrade(request, connection) {
     const { headers } = request;
     const key = headers['sec-websocket-key'];
     const hashed = hash(key);
-    const connection = new Connection(socket);
     connection.send(handshake.success(hashed), true);
     connection.on('disconnect', this.#onDisconnect.bind(this));
     this.#connections.add(connection);

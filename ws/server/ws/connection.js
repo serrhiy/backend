@@ -4,7 +4,7 @@ const events = require('node:events');
 const { builder, parser } = require('./frame/main.js');
 const getFrames = require('./getFrames.js');
 
-class Connection extends events.EventEmitter {  
+class Connection extends events.EventEmitter {
   #socket = null;
 
   constructor(socket) {
@@ -34,6 +34,7 @@ class Connection extends events.EventEmitter {
 
   #onEnd() {
     this.#socket.destroy();
+    this.#socket.removeAllListeners();
     this.emit('disconnect', this);
   }
 
