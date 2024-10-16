@@ -4,6 +4,8 @@ const events = require('node:events');
 const { builder, parser } = require('./frame/main.js');
 const getFrames = require('./getFrames.js');
 
+const preparePong = () => Buffer.from([138, 0]); // to do
+
 class Connection extends events.EventEmitter {
   #socket = null;
 
@@ -20,8 +22,8 @@ class Connection extends events.EventEmitter {
       const opcode = frame[0] & 15;
       const masked = frame[1] & 256;
       const rsv = frame[0] & 112;
-      if (!masked || rsv) { /* close connection */ }
-      if (opcode === 8) return void this.#onEnd();
+      if (!masked || rsv) { /* Fail the WebSocket Connection */ }
+      if (opcode === 8) return void this.#onEnd(); // may includes payload data
       if (opcode === 9) return void this.send(preparePong(), true);
       if (opcode === 10) return;
       const mask = parser.mask(frame);
