@@ -19,7 +19,8 @@ class Connection extends events.EventEmitter {
     getFrames(this.#socket, (last, frame) => {
       const opcode = frame[0] & 15;
       const masked = frame[1] & 256;
-      if (!masked) { /* close connection */ }
+      const rsv = frame[0] & 112;
+      if (!masked || rsv) { /* close connection */ }
       if (opcode === 8) return void this.#onEnd();
       if (opcode === 9) return void this.send(preparePong(), true);
       if (opcode === 10) return;
