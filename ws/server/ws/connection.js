@@ -96,9 +96,9 @@ class Connection extends events.EventEmitter {
   }
 
   close() {
-    this.#state = CLOSING;
     const closingFrame = prepareClose();
     this.send(closingFrame, true);
+    this.#state = CLOSING;
   }
 
   ping() {
