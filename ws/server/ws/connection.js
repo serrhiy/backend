@@ -37,37 +37,45 @@ class Connection extends events.EventEmitter {
   }
 
   #getMessages() {
-    const dataChunks = [];
+    const chunks = [];
     const decoder = new TextDecoder();
+    let dataType = -1;
     getFrames(this.#socket, (last, frame) => {
       const opcode = frame[0] & 15;
       const masked = frame[1] & 256;
       const rsv = frame[0] & 112;
       if (!masked || rsv) { /* Fail the WebSocket Connection */ }
-      if (opcode === 8) {
-        if (this.#state !== CLOSING) this.close();
-        this.#state = CLOSED;
-        return void this.#onEnd();
-      }
-      if (opcode === 9) {
-        return void this.send(preparePong(frame), true);
-      }
-      if (opcode === 10) {
-        if (!this.#pingTimer) return;
-        clearTimeout(this.#pingTimer)
-        this.#pingTimer = null;
-        return;
-      };
+      if (opcode === 8) return void this.#onClosing()
+      if (opcode === 9) return void this.#onPing();
+      if (opcode === 10) return void this.#onPong();
+      if (opcode === 1 || opcode == 2) dataType = opcode;
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
-      const dataChunk = decoder.decode(message);
-      dataChunks.push(dataChunk);
+      const chunk = dataType === 1 ? decoder.decode(message) : message;
+      chunks.push(chunk);
       if (!last) return;
-      const result = dataChunks.join('');
-      dataChunks.length = 0;
+      const result = dataType === 1 ? chunks.join('') : Buffer.concat(chunks);
+      chunks.length = 0;
       this.emit('message', result);
     });
+  }
+
+  #onClosing() {
+    if (this.#state !== CLOSING) this.close();
+    this.#state = CLOSED;
+    return void this.#onEnd();
+  }
+
+  #onPong() {
+    if (!this.#pingTimer) return;
+    clearTimeout(this.#pingTimer)
+    this.#pingTimer = null;
+  }
+
+  #onPing() {
+    const message = preparePong(frame);
+    this.send(message, true);
   }
 
   #onEnd() {
@@ -92,7 +100,6 @@ class Connection extends events.EventEmitter {
   }
 
   ping() {
-    console.log('ping');
     if (this.#pingTimer) return;
     const pingFrame = preparePing();
     this.send(pingFrame, true);
