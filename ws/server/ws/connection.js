@@ -42,20 +42,20 @@ class Connection extends events.EventEmitter {
     let dataType = -1;
     getFrames(this.#socket, (last, frame) => {
       const opcode = frame[0] & 15;
-      const masked = frame[1] & 256;
+      const masked = frame[1] & 128;
       const rsv = frame[0] & 112;
-      if (!masked || rsv) { /* Fail the WebSocket Connection */ }
+      if (!masked || (rsv !== 0)) return void this.close();
       if (opcode === 8) return void this.#onClosing()
       if (opcode === 9) return void this.#onPing();
       if (opcode === 10) return void this.#onPong();
       if (opcode === 1 || opcode == 2) dataType = opcode;
-      if (opcode !== 0) { /* Fail the WebSocket Connection */ }
+      else if (opcode !== 0) return this.close();      
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
       const chunk = dataType === 1 ? decoder.decode(message) : message;
       chunks.push(chunk);
-      if (!last) return;
+      if (last === 0) return;      
       const result = dataType === 1 ? chunks.join('') : Buffer.concat(chunks);
       chunks.length = 0;
       this.emit('message', result);
@@ -87,7 +87,7 @@ class Connection extends events.EventEmitter {
   }
 
   send(data, raw = false) {
-    if (CLOSING) return;
+    if (this.#state === CLOSING) return;
     if (raw) return void this.#socket.write(data);
     if (typeof data === 'string') {
       const message = builder.fromString(data);
