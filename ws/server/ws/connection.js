@@ -49,6 +49,7 @@ class Connection extends events.EventEmitter {
       if (opcode === 9) return void this.#onPing();
       if (opcode === 10) return void this.#onPong();
       if (opcode === 1 || opcode == 2) dataType = opcode;
+      if (opcode !== 0) { /* Fail the WebSocket Connection */ }
       const mask = parser.mask(frame);
       const content = parser.content(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
@@ -86,6 +87,7 @@ class Connection extends events.EventEmitter {
   }
 
   send(data, raw = false) {
+    if (CLOSING) return;
     if (raw) return void this.#socket.write(data);
     if (typeof data === 'string') {
       const message = builder.fromString(data);
