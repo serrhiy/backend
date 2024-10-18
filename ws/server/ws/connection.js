@@ -27,7 +27,7 @@ const PING_TIMEOUT = 3000;
 class Connection extends events.EventEmitter {
   #socket = null;
   #state = OPEN;
-  #pingsTimers = [];
+  #pingTimer = null;
 
   constructor(socket) {
     super();
@@ -50,14 +50,13 @@ class Connection extends events.EventEmitter {
         return void this.#onEnd();
       }
       if (opcode === 9) {
-        console.log('pong');
         return void this.send(preparePong(frame), true);
       }
       if (opcode === 10) {
-        const timers = this.#pingsTimers;
-        if (timers.length === 0) return;
-        const timer = timers.shift();
-        clearTimeout(timer);
+        if (!this.#pingTimer) return;
+        clearTimeout(this.#pingTimer)
+        this.#pingTimer = null;
+        return;
       };
       const mask = parser.mask(frame);
       const content = parser.content(frame);
@@ -72,7 +71,7 @@ class Connection extends events.EventEmitter {
   }
 
   #onEnd() {
-    for (const timer of this.#pingsTimers) clearTimeout(timer);
+    if (this.#pingTimer) clearTimeout(this.#pingTimer);
     this.#socket.destroy();
     this.#socket.removeAllListeners();
     this.emit('disconnect', this);
@@ -93,11 +92,11 @@ class Connection extends events.EventEmitter {
   }
 
   ping() {
-    const timers = this.#pingsTimers;
+    console.log('ping');
+    if (this.#pingTimer) return;
     const pingFrame = preparePing();
     this.send(pingFrame, true);
-    const timer = setTimeout(this.#onEnd.bind(this), PING_TIMEOUT);
-    timers.push(timer);
+    this.#pingTimer = setTimeout(this.#onEnd.bind(this), PING_TIMEOUT);
   }
 };
 
