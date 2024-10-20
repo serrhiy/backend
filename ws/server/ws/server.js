@@ -29,7 +29,7 @@ class WebSocketServer extends events.EventEmitter {
     const hashed = hash(key);
     connection.send(handshake.success(hashed), true);
     connection.on('disconnect', this.#onDisconnect.bind(this));
-    this.#connections.add(connection);    
+    this.#connections.add(connection);
     this.emit('connection', connection);
   }
 

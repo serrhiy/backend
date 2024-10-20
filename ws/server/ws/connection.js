@@ -2,8 +2,9 @@
 
 const events = require('node:events');
 const { builder, parser } = require('./frame/main.js');
-const { Buffer } = require('node:buffer');
+const buffer = require('node:buffer');
 const getFrames = require('./getFrames.js');
+const { Buffer } = buffer;
 
 const preparePong = (pingFrame) => {
   const content = parser.content(pingFrame);
@@ -49,10 +50,11 @@ class Connection extends events.EventEmitter {
       if (opcode === 9) return void this.#onPing();
       if (opcode === 10) return void this.#onPong();
       if (opcode === 1 || opcode == 2) dataType = opcode;
-      else if (opcode !== 0) return this.close();      
-      const mask = parser.mask(frame);
+      else if (opcode !== 0) return this.close();
       const content = parser.content(frame);
+      const mask = parser.mask(frame);
       const message = Uint8Array.from(content, (elt, i) => elt ^ mask[i % 4]);
+      if (dataType === 1 && !buffer.isUtf8(message)) return void this.close();
       const chunk = dataType === 1 ? decoder.decode(message) : message;
       chunks.push(chunk);
       if (last === 0) return;      
