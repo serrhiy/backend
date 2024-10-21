@@ -37,10 +37,7 @@ const main = async () => {
     const workerIndex = (index + 1) % cpus;
     const worker = workers[workerIndex];
     const connections = workersConnections[workerIndex];
-    socket.on('close', () => {
-      socket.removeAllListeners();
-      connections.delete(socket);
-    });
+    socket.on('close', () => void connections.delete(socket));
     connections.add(socket);
     worker.send(null, socket, { keepOpen: true });
     index++;
