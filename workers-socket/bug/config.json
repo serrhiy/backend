@@ -1,0 +1,9 @@
+{
+  "server": {
+    "options": {
+      "pauseOnConnect": true
+    },
+    "port": 8000
+  },
+  "spawnTimeout": 1000
+}
