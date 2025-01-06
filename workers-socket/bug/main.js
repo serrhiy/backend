@@ -27,6 +27,7 @@ const main = async () => {
   const server = new net.Server(config.server.options);
   let index = 0;
   server.on('connection', (socket) => {
+    console.log({ index });
     const fd = socket._handle.fd;
     const worker = workers[index];
     worker.postMessage(fd);

@@ -11,10 +11,11 @@ const main = () => {
     response.end('Hello world');
   });
   threads.parentPort.on('message', (fd) => {
-    const socket = new net.Socket({ fd });
+    const socket = new net.Socket({ fd });  
     server.emit('connection', socket);
     socket.resume();
   });
+  server.listen(null, null);
 };
 
 main();
